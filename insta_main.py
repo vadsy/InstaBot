@@ -1,4 +1,5 @@
 import requests, urllib
+import json
 from textblob import TextBlob
 from textblob.sentiments import NaiveBayesAnalyzer
 
@@ -98,7 +99,7 @@ def get_user_post(username):
             image_name = user_media['data'][0]['id'] + '.jpeg'
             image_url = user_media['data'][0]['images']['standard_resolution']['url']
             urllib.urlretrieve(image_url, image_name)
-            print 'Your image has been downloaded!'
+            #print 'Your image has been downloaded!'
             return user_media['data'][0]['id']
         else:
             print "There is no recent post!"
@@ -112,7 +113,7 @@ def like_a_post(username):
     media_id = get_user_post(username)
     request_url = (base_url + 'media/%s/likes') % media_id
     payload = {"access_token": app_access_token}
-    print 'POST request url : %s' % request_url
+    print "POST request url : %s" % request_url
     post_a_like = requests.post(request_url, payload).json()
     if post_a_like['meta']['code'] == 200:
         print 'Like was successful!'
@@ -123,9 +124,9 @@ def like_a_post(username):
 # *****************************************************Function for deleting negatie comments****************************************************
 def delete_negative_comment(username):
     media_id = get_user_post(username)
+    get_comment_list(media_id)
     request_url = (base_url + 'media/%s/comments/?access_token=%s') % (media_id, app_access_token)
     print 'GET request url : %s' % request_url
-    print "@@@@"
     comment_info = requests.get(request_url).json()
     if comment_info['meta']['code'] == 200:
         if len(comment_info['data']) > 0:
@@ -142,10 +143,26 @@ def delete_negative_comment(username):
                     else:
                         print 'Could not delete the comment'
         else:
-            print 'No comments found'
+            print "No comments found"
     else:
-        print 'Status code other than 200 received!'
+        print "Status code other than 200 received!"
     print "No negative comments."
+
+
+#******************************************************Get a list of comments of the user*******************************************
+def get_comment_list(media_id):
+    request_url = (base_url + 'media/%s/comments/?access_token=%s') % (media_id, app_access_token)
+    print 'GET request url : %s' % request_url
+    comment_list = requests.get(request_url).json()
+    print comment_list['data'][0]['text']
+    if comment_list['meta']['code'] == 200:
+        if 'data' in comment_list:
+            for i in range(0, len(comment_list)):
+                print comment_list['data'][i]['text'] + "\n"
+        else:
+            print "No Comments To Display"
+    else:
+        print "Your comments could not be displayed."
 
 
 # *********************************************Start bot function-This is where it all begins****************************************
@@ -157,7 +174,7 @@ def start_bot():
         print "3.Get your own recent post"
         print "4.Get the recent post of a user by username"
         print "5.Like recent post of a user"
-        print "6.Delete negative comment for a user"
+        print "6.Get a list of all the comments and delete negative comment for a user"
         print "7.Exit"
 
         choice = raw_input("Enter you choice: ")
